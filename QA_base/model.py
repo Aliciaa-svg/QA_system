@@ -8,93 +8,7 @@ import re
 
 logger = logging.getLogger(__name__)
 
-class BM25(object):
-    def __init__(self, documents_list, k1=2, k2=1, b=0.5):
-        self.documents_list = documents_list
-        self.documents_number = len(documents_list)
-        self.avg_documents_len = sum([len(document) for document in documents_list]) / self.documents_number
-        self.f = []
-        self.idf = {}
-        self.k1 = k1
-        self.k2 = k2
-        self.b = b
-        self.init()
-    
-    def init(self):
-        df = {}
-        for document in self.documents_list:
-            temp = {}
-            for word in document:
-                temp[word] = temp.get(word, 0) + 1
-            self.f.append(temp)
-            for key in temp.keys():
-                df[key] = df.get(key, 0) + 1
-        for key, value in df.items():
-            self.idf[key] = np.log((self.documents_number - value + 0.5) / (value + 0.5))
-
-    def get_score(self, index, query):
-        score = 0.0
-        document_len = len(self.f[index])
-        qf = Counter(query)
-        for q in query:
-            if q not in self.f[index]:
-                continue
-            score += self.idf[q] * (self.f[index][q] * (self.k1 + 1) / (
-                        self.f[index][q] + self.k1 * (1 - self.b + self.b * document_len / self.avg_documents_len))) * (
-                                 qf[q] * (self.k2 + 1) / (qf[q] + self.k2))
-
-        return score
-
-    def get_documents_score(self, query):
-        score_list = []
-        for i in range(self.documents_number):
-            score_list.append(self.get_score(i, query))
-        return score_list
-
 def resolve_weights(smartirs):
-    """Check the validity of `smartirs` parameters.
-
-    Parameters
-    ----------
-    smartirs : str
-        `smartirs` or SMART (System for the Mechanical Analysis and Retrieval of Text)
-        Information Retrieval System, a mnemonic scheme for denoting tf-idf weighting
-        variants in the vector space model. The mnemonic for representing a combination
-        of weights takes the form ddd, where the letters represents the term weighting of the document vector.
-        for more information visit `SMART Information Retrieval System
-        <https://en.wikipedia.org/wiki/SMART_Information_Retrieval_System>`_.
-
-    Returns
-    -------
-    str of (local_letter, global_letter, normalization_letter)
-
-    local_letter : str
-        Term frequency weighing, one of:
-            * `b` - binary,
-            * `t` or `n` - raw,
-            * `a` - augmented,
-            * `l` - logarithm,
-            * `d` - double logarithm,
-            * `L` - log average.
-    global_letter : str
-        Document frequency weighting, one of:
-            * `x` or `n` - none,
-            * `f` - idf,
-            * `t` - zero-corrected idf,
-            * `p` - probabilistic idf.
-    normalization_letter : str
-        Document normalization, one of:
-            * `x` or `n` - none,
-            * `c` - cosine,
-            * `u` - pivoted unique,
-            * `b` - pivoted character length.
-
-    Raises
-    ------
-    ValueError
-        If `smartirs` is not a string of length 3 or one of the decomposed value
-        doesn't fit the list of permissible values.
-    """
     if isinstance(smartirs, str) and re.match(r"...\....", smartirs):
         match = re.match(r"(?P<ddd>...)\.(?P<qqq>...)", smartirs)
         raise ValueError(
@@ -130,44 +44,11 @@ def resolve_weights(smartirs):
     return w_tf + w_df + w_n
 
 def df2idf(docfreq, totaldocs, log_base=2.0, add=0.0):
-    r"""Compute inverse-document-frequency for a term with the given document frequency `docfreq`:
-    :math:`idf = add + log_{log\_base} \frac{totaldocs}{docfreq}`
-
-    Parameters
-    ----------
-    docfreq : {int, float}
-        Document frequency.
-    totaldocs : int
-        Total number of documents.
-    log_base : float, optional
-        Base of logarithm.
-    add : float, optional
-        Offset.
-
-    Returns
-    -------
-    float
-        Inverse document frequency.
-
-    """
+    
     return add + np.log(float(totaldocs-docfreq+0.5) / docfreq+0.5) / np.log(log_base)
 
 def smartirs_wlocal(tf, local_scheme):
-    """Calculate local term weight for a term using the weighting scheme specified in `local_scheme`.
-
-    Parameters
-    ----------
-    tf : int
-        Term frequency.
-    local : {'b', 'n', 'a', 'l', 'd', 'L'}
-        Local transformation scheme.
-
-    Returns
-    -------
-    float
-        Calculated local weight.
-
-    """
+    
     if local_scheme == "n":
         return tf
     elif local_scheme == "l":
@@ -182,23 +63,7 @@ def smartirs_wlocal(tf, local_scheme):
         return (1 + np.log2(tf)) / (1 + np.log2(tf.mean(axis=0)))
 
 def smartirs_wglobal(docfreq, totaldocs, global_scheme):
-    """Calculate global document weight based on the weighting scheme specified in `global_scheme`.
-
-    Parameters
-    ----------
-    docfreq : int
-        Document frequency.
-    totaldocs : int
-        Total number of documents.
-    global_scheme : {'n', 'f', 't', 'p'}
-        Global transformation scheme.
-
-    Returns
-    -------
-    float
-        Calculated global weight.
-
-    """
+    
     if global_scheme == "n":
         return 1.0
     elif global_scheme == "f":
@@ -209,24 +74,7 @@ def smartirs_wglobal(docfreq, totaldocs, global_scheme):
         return max(0, np.log2((1.0 * totaldocs - docfreq) / docfreq))
 
 def precompute_idfs(wglobal, dfs, total_docs):
-    """Pre-compute the inverse document frequency mapping for all terms.
-
-    Parameters
-    ----------
-    wglobal : function
-        Custom function for calculating the "global" weighting function.
-        See for example the SMART alternatives under :func:`~gensim.models.tfidfmodel.smartirs_wglobal`.
-    dfs : dict
-        Dictionary mapping `term_id` into how many documents did that term appear in.
-    total_docs : int
-        Total number of documents.
-
-    Returns
-    -------
-    dict of (int, float)
-        Inverse document frequencies in the format `{term_id_1: idfs_1, term_id_2: idfs_2, ...}`.
-
-    """
+    
     # not strictly necessary and could be computed on the fly in TfidfModel__getitem__.
     # this method is here just to speed things up a little.
     return {termid: wglobal(df, total_docs) for termid, df in dfs.items()}
