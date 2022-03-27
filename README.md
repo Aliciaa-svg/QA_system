@@ -1,12 +1,6 @@
 # TODO
 
-Stage 1: 检索式(单轮对话)、生成式(多轮对话) [2 systems]
-
-Stage 2: 检索+生成 [1 system] (检索辅助生成)
-
---------------------（以上为非任务型对话系统）--------------------
-
-(maybe)Stage 3: 任务型对话系统
+![system_overview](./system_overview.png)
 
 > **Reference(科普类)**
 >
