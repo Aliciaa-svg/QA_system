@@ -161,13 +161,13 @@ meanings = {
 def update_intent(input, dialog_status):
     keys = "|".join(["塔罗"])
     if re.search(keys, input):
-        dialog_status.intent = 'tarot'
+        dialog_status.intent = 'tarot start'
     
     return dialog_status
 
 def tarot(input, dialog_status):
     output = [] # 记录输出
-    if re.search(r"开始|塔罗|占卜", input):
+    if dialog_status.intent == 'tarot start':
         card_keys = list(cards.keys())
         shuffle(card_keys)
         indices = random.sample(range(1, 78), 4)
@@ -194,6 +194,7 @@ def tarot(input, dialog_status):
             output.append(val)
             
         output.append("完成抽牌与解读")
+        dialog_status.intent = 'end'
         return output
         
 # print(tarot("开始占卜", None))
