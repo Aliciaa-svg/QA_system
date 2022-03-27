@@ -158,13 +158,6 @@ meanings = {
     "切牌": "表示问卜者的主观想法"
 }
 
-def update_intent(input, dialog_status):
-    keys = "|".join(["塔罗"])
-    if re.search(keys, input):
-        dialog_status.intent = 'tarot start'
-    
-    return dialog_status
-
 def tarot(input, dialog_status):
     output = [] # 记录输出
     if dialog_status.intent == 'tarot start':

@@ -151,10 +151,6 @@ def getWuxing(cache):
     return score
 
 
-def update_intent(input, cache, dialog_status):
-    if re.search(r"八字|生辰", input):
-        dialog_status.intent = "bazi start"
-
 def birth(input, cache, dialog_status):
     # input format: 一九九四/年/五月三十/日
     if dialog_status.intent == "bazi start":
