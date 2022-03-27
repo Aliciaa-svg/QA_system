@@ -19,3 +19,11 @@ class DialoStatus(object):
         elif re.search(r"记录|记下|备忘", input):
             self.intent = 'memo'
             self.mode = 'task'
+
+    def process_dialog(self, input):
+        if self.intent == 'tarot start':
+            self.output = tarot.tarot(input, self)
+        elif self.intent == 'memo':
+            self.output = memo.memo(input, self)
+        elif self.intent == 'bazi start':
+            pass
