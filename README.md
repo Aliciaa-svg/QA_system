@@ -2,7 +2,7 @@
 
 ### 系统架构
 
-![截屏2022-03-27 下午5.19.11](/Users/zhao/Desktop/截屏2022-03-27 下午5.19.11.png)
+![system_overview](./system_overview.png)
 
 > **Reference(科普类)**
 >
