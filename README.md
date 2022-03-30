@@ -8,8 +8,9 @@
 
 `python dialog_manage.py`
 
-### demo
+### Demo
 
+![demo](./demo.png)
 
 ### Pretrained Models
 
